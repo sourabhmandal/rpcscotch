@@ -53,8 +53,17 @@ const template = (populate: IUnaryRpcTemplate): string => {
 `;
 };
 
-export function generateUnaryFunction(rpc: IUnaryRpcTemplate) {
-  const data: string = template(rpc);
+export function generateServerStreamFunction(rpc: IUnaryRpcTemplate) {
+  const populate: IUnaryRpcTemplate = {
+    rpcName: rpc.rpcName,
+    clientMessageType: rpc.clientMessageType,
+    requestBody: rpc.requestBody,
+    uri: rpc.uri,
+    serviceName: rpc.serviceName,
+  };
+
+  const data: string = template(populate);
+
   const dir = __dirname + `/../generated_clients`;
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, 0o744);
