@@ -26,7 +26,7 @@ const template = (populate: IUnaryRpcTemplate): string => {
 
   return `
   import { ${clientMessageName} } from "../proto/chat_pb";
-  import { Response } from "express";
+  import { Request, Response } from "express";
   import { credentials } from "grpc";
   import { ${populate.serviceName}Client } from "../proto/chat_grpc_pb";
 
@@ -34,7 +34,7 @@ const template = (populate: IUnaryRpcTemplate): string => {
   const client = new ChatServiceClient("${populate.uri}", credentials.createInsecure());
   const request = new UnaryNormalMessage();
   
-  const ${funcName} = (req: Request, res: Response): any => {
+  export const ${funcName} = (req: Request, res: Response): any => {
     
     const request = new ${clientMessageName}();
     ${request_code}
@@ -49,7 +49,6 @@ const template = (populate: IUnaryRpcTemplate): string => {
     });
   };
   //
-  module.exports = ${funcName};
 `;
 };
 

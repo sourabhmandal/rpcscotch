@@ -5,11 +5,11 @@ import { uploadProto } from "./controllers/uploadProto";
 import multer from "multer";
 import { CodeGenerator } from "./controllers/CodeGenerator";
 import { Request, Response } from "express";
-import {
-  serverStreamComms,
-  clientStreamComms,
-  bidirStreamComms,
-} from "./code_generator_template/unaryDemo";
+import fs from "fs";
+
+// import {
+//   serverStreamComms,
+// } from "./code_generator_template/unaryDemo";
 import ws from "ws";
 import WebSocket from "ws";
 const port = 8080; // default port to listen
@@ -35,7 +35,14 @@ const upload = multer({
       cb(null, false);
       return;
     }
-    console.log("Hello");
+    let requiredDir = "./proto";
+
+    // remove proto folder if exist
+    if (fs.existsSync(requiredDir)) fs.rmdirSync(requiredDir);
+  
+    // create proto folder if not exist
+    if (!fs.existsSync(requiredDir)) fs.mkdirSync(requiredDir);
+  
     cb(null, true);
   },
 });
@@ -50,23 +57,23 @@ wss.on("connection", (ws) => {
   console.log("A new Client connected");
   wsClient = ws;
 });
-app.get("/test/unary", (req: Request, res: Response) => {
-  const { query } = req;
-  const func = require(`./generated_clients/${query.func}`);
-  func(req, res);
-});
+// app.get("/test/unary", (req: Request, res: Response) => {
+//   const { query } = req;
+//   const func = require(`./generated_clients/${query.func}`);
+//   func(req, res);
+// });
 
-app.post("/test/serverstream", (req: Request, res: Response) => {
-  serverStreamComms(req, res, wsClient);
-});
+// app.post("/test/serverstream", (req: Request, res: Response) => {
+//   serverStreamComms(req, res, wsClient);
+// });
 
-app.get("/test/clientstream", (req: Request, res: Response) => {
-  clientStreamComms(req, res, wsClient);
-});
+// app.get("/test/clientstream", (req: Request, res: Response) => {
+//   clientStreamComms(req, res, wsClient);
+// });
 
-app.get("/test/bidirstream", (req: Request, res: Response) => {
-  bidirStreamComms(req, res, wsClient);
-});
+// app.get("/test/bidirstream", (req: Request, res: Response) => {
+//   bidirStreamComms(req, res, wsClient);
+// });
 
 // start the Express server
 app.listen(port, () => {

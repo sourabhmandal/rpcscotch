@@ -5,5 +5,6 @@ export const uploadProto = (req: Request, res: Response) => {
     res.json({ msg: "Wrong file type", status: "Error" });
     return;
   }
+
   res.json({ msg: "Upload Successful", status: "success" });
 };

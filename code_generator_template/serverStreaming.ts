@@ -22,19 +22,39 @@ const template = (populate: IUnaryRpcTemplate): string => {
 
     request_code += "    ";
   });
-  let clientMessageName = `Unary${populate.clientMessageType}`;
+  let clientMessageName = `Stream${populate.clientMessageType}`;
 
   return `
   import { ${clientMessageName} } from "../proto/chat_pb";
-  import { Response } from "express";
+  import { Request, Response } from "express";
   import { credentials } from "grpc";
   import { ${populate.serviceName}Client } from "../proto/chat_grpc_pb";
-
+  import ws from "ws";
 
   const client = new ChatServiceClient("${populate.uri}", credentials.createInsecure());
   const request = new UnaryNormalMessage();
   
-  const ${funcName} = (req: Request, res: Response): any => {
+  export const ${funcName} = (req: Request, res: Response, wsc: ws): any => {
+    if (wsc.OPEN === 1) {
+      const request = new StreamNormalMessage();
+      const recieved = req.body;
+      // console.log(recieved);
+      request.setBodyList(recieved.body);
+      request.setLanguage(recieved.language);
+      // read message sent to server
+  
+      const port = 7899;
+      const uri = 'localhost:7899';
+      const client = new ChatServiceClient(uri, credentials.createInsecure());
+      const stream = client.serverStreamComms(request);
+      stream.on("err", (err) => console.log(err));
+      stream.on("data", (d) => {
+        wsc.send(d.toString());
+      });
+      stream.on("end", () => {
+        res.json({ msg: "stream closed" });
+      });
+    }
     
     const request = new ${clientMessageName}();
     ${request_code}
@@ -49,21 +69,11 @@ const template = (populate: IUnaryRpcTemplate): string => {
     });
   };
   //
-  module.exports = ${funcName};
 `;
 };
 
 export function generateServerStreamFunction(rpc: IUnaryRpcTemplate) {
-  const populate: IUnaryRpcTemplate = {
-    rpcName: rpc.rpcName,
-    clientMessageType: rpc.clientMessageType,
-    requestBody: rpc.requestBody,
-    uri: rpc.uri,
-    serviceName: rpc.serviceName,
-  };
-
-  const data: string = template(populate);
-
+  const data: string = template(rpc);
   const dir = __dirname + `/../generated_clients`;
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, 0o744);
