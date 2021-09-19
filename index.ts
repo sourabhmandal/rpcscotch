@@ -63,12 +63,13 @@ app.post("/test/serverstream", (req: Request, res: Response) => {
   const { query } = req;
   const func = require(`./generated_clients/${query.func}`);
   func(req, res, wsClient);
-  //serverStreamComms(req, res, wsClient);
 });
 
-// app.get("/test/clientstream", (req: Request, res: Response) => {
-//   clientStreamComms(req, res, wsClient);
-// });
+app.post("/test/clientstream", (req: Request, res: Response) => {
+  const { query } = req;
+  const func = require(`./generated_clients/${query.func}`);
+  func(req, res, wsClient);
+});
 
 // app.get("/test/bidirstream", (req: Request, res: Response) => {
 //   bidirStreamComms(req, res, wsClient);

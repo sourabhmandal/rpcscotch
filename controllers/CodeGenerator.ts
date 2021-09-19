@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { generateClientStreamFunction } from "../code_generator_template/clientStreaming";
 import { generateServerStreamFunction } from "../code_generator_template/serverStreaming";
 import { generateUnaryFunction } from "../code_generator_template/unary";
 
@@ -30,6 +31,15 @@ interface IUnaryRpcTemplate {
   serviceName: string;
 }
 
+interface IClientStreamRpcTemplate {
+  rpcName: string;
+  clientMessageType: string;
+  requestBody: any;
+  uri: string;
+  serviceName: string;
+  socketKeepAliveTime: number;
+}
+
 export const CodeGenerator = (req: Request, res: Response) => {
   const requestData: ICodeGeneratorData = req.body;
 
@@ -53,6 +63,16 @@ export const CodeGenerator = (req: Request, res: Response) => {
           uri: rpc.uri,
         };
         generateServerStreamFunction(rpcData);
+      } else if (rpc.rpcType === "client-stream") {
+        const rpcData: IClientStreamRpcTemplate = {
+          serviceName: service.serviceName,
+          rpcName: rpc.rpcName,
+          clientMessageType: rpc.clientMessageType,
+          requestBody: rpc.requestBody,
+          uri: rpc.uri,
+          socketKeepAliveTime: 1000,
+        };
+        generateClientStreamFunction(rpcData);
       }
     });
   });

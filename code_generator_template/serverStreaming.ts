@@ -15,10 +15,7 @@ const template = (populate: IServerStreamRpcTemplate): string => {
   Object.keys(populate.requestBody).map((key: string, idx: number) => {
     let keyCaptitalised = capitalizeFirstLetter(key);
     if (typeof populate.requestBody[key] === "string")
-      request_code += `request.set${keyCaptitalised}("${populate.requestBody[key]}");\n\t`;
-    else
-      request_code += `request.set${keyCaptitalised}(${populate.requestBody[key]});\n`;
-
+      request_code += `request.set${keyCaptitalised}(recieved.${key});\n\t`;
     request_code += "\t\t";
   });
 
@@ -28,8 +25,6 @@ const template = (populate: IServerStreamRpcTemplate): string => {
   import { credentials } from "grpc";
   import { ${populate.serviceName}Client } from "../proto/recieved_grpc_pb";
   import ws from "ws";
-
-  const client = new ${populate.serviceName}Client("${populate.uri}", credentials.createInsecure());
   
   const ${funcName} = (req: Request, res: Response, wsc: ws): any => {
     if (wsc.OPEN === 1) {

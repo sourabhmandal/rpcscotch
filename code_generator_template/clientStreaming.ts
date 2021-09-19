@@ -7,6 +7,7 @@ interface IClientStreamRpcTemplate {
   requestBody: any;
   uri: string;
   serviceName: string;
+  socketKeepAliveTime: number;
 }
 
 const template = (populate: IClientStreamRpcTemplate): string => {
@@ -14,11 +15,7 @@ const template = (populate: IClientStreamRpcTemplate): string => {
   let funcName = `streamServer${capitalizeFirstLetter(populate.rpcName)}`;
   Object.keys(populate.requestBody).map((key: string, idx: number) => {
     let keyCaptitalised = capitalizeFirstLetter(key);
-    if (typeof populate.requestBody[key] === "string")
-      request_code += `request.set${keyCaptitalised}("${populate.requestBody[key]}");\n\t`;
-    else
-      request_code += `request.set${keyCaptitalised}(${populate.requestBody[key]});\n`;
-
+    request_code += `request.set${keyCaptitalised}(recieved.${key});\n\t\t`;
     request_code += "\t\t";
   });
 
@@ -28,49 +25,34 @@ const template = (populate: IClientStreamRpcTemplate): string => {
   import { credentials } from "grpc";
   import { ${populate.serviceName}Client } from "../proto/recieved_grpc_pb";
   import ws from "ws";
-
-  const client = new ${populate.serviceName}Client("${populate.uri}", credentials.createInsecure());
   
   const ${funcName} = (req: Request, res: Response, wsc: ws): any => {
     if (wsc.OPEN === 1) {
-      const request = new ${populate.clientMessageType}();
-      const recieved = req.body;
-      // console.log(recieved);
-      ${request_code}
-
       const client = new ${populate.serviceName}Client("${populate.uri}", credentials.createInsecure());
-      
-      // send single message to server
-      const stream = client.${populate.rpcName}(request);
-      stream.on("err", (err) => console.log(err));
-      
-      // read message sent from server
-      stream.on("data", (d) => {
-        wsc.send(d.toString());
+      // Send Server response as json
+      const stream = client.${populate.rpcName}((error, data) => {
+        res.json(data.toObject());
       });
-      // close stream on Data transfer completion
-      stream.on("end", () => {
-        res.json({ msg: "stream closed" });
+      // send websocket data to server
+      wsc.on("message", (msg: string) => {
+        let recieved = JSON.parse(msg);
+        let request = new ${populate.clientMessageType}();
+        ${request_code}
+        stream.write(request);
+        wsc.send("ACK");
       });
+  
+      setTimeout(() => {
+        stream.end();
+        if (wsc.CLOSED) wsc.close();
+      }, ${populate.socketKeepAliveTime});
     }
-    
-    const request = new ${populate.clientMessageType}();
-    ${request_code}
-    
-    client.${populate.rpcName}(request, function (err: any, data: any) {
-      if (err) {
-        console.log(err);
-        return;
-      }
-      
-      res.json(data.toObject());
-    });
   };
   module.exports = ${funcName};
 `;
 };
 
-export function generateServerStreamFunction(rpc: IClientStreamRpcTemplate) {
+export function generateClientStreamFunction(rpc: IClientStreamRpcTemplate) {
   const data: string = template(rpc);
   const dir = __dirname + `/../generated_clients`;
 
