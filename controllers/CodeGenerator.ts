@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { generateServerStreamFunction } from "../code_generator_template/serverStreaming";
 import { generateUnaryFunction } from "../code_generator_template/unary";
 
 interface ICodeGeneratorData {
@@ -31,13 +32,29 @@ interface IUnaryRpcTemplate {
 
 export const CodeGenerator = (req: Request, res: Response) => {
   const requestData: ICodeGeneratorData = req.body;
-  const rpc: IUnaryRpcTemplate = {
-    serviceName: requestData.services[0].serviceName,
-    rpcName: requestData.services[0].rpcs[0].rpcName,
-    clientMessageType: requestData.services[0].rpcs[0].clientMessageType,
-    requestBody: requestData.services[0].rpcs[0].requestBody,
-    uri: requestData.services[0].rpcs[0].uri,
-  };
-  generateUnaryFunction(rpc);
-  res.json(rpc);
+
+  requestData.services.map((service: any) => {
+    service.rpcs.map((rpc: any) => {
+      if (rpc.rpcType === "unary") {
+        const rpcData: IUnaryRpcTemplate = {
+          serviceName: service.serviceName,
+          rpcName: rpc.rpcName,
+          clientMessageType: rpc.clientMessageType,
+          requestBody: rpc.requestBody,
+          uri: rpc.uri,
+        };
+        generateUnaryFunction(rpcData);
+      } else if (rpc.rpcType === "server-stream") {
+        const rpcData: IUnaryRpcTemplate = {
+          serviceName: service.serviceName,
+          rpcName: rpc.rpcName,
+          clientMessageType: rpc.clientMessageType,
+          requestBody: rpc.requestBody,
+          uri: rpc.uri,
+        };
+        generateServerStreamFunction(rpcData);
+      }
+    });
+  });
+  res.json({ msg: "Code generated for RPCS" });
 };

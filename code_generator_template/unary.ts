@@ -1,6 +1,5 @@
 import { capitalizeFirstLetter } from "../utils";
-
-const fs = require("fs");
+import fs from "fs";
 
 interface IUnaryRpcTemplate {
   rpcName: string;
@@ -54,8 +53,5 @@ export function generateUnaryFunction(rpc: IUnaryRpcTemplate) {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, 0o744);
   }
-  fs.writeFileSync(`${dir}/${rpc.rpcName}.ts`, data, (err: Error) => {
-    if (err) throw err;
-    console.log(`rpc : ${rpc.rpcName}`);
-  });
+  fs.writeFileSync(`${dir}/${rpc.rpcName}.ts`, data);
 }

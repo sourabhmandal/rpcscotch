@@ -57,13 +57,15 @@ wss.on("connection", (ws) => {
 app.post("/test/unary", (req: Request, res: Response) => {
   const { query } = req;
   const func = require(`./generated_clients/${query.func}`);
-  console.log(func);
   func(req, res);
 });
 
-// app.post("/test/serverstream", (req: Request, res: Response) => {
-//   serverStreamComms(req, res, wsClient);
-// });
+app.post("/test/serverstream", (req: Request, res: Response) => {
+  const { query } = req;
+  const func = require(`./generated_clients/${query.func}`);
+  func(req, res, wsClient);
+  //serverStreamComms(req, res, wsClient);
+});
 
 // app.get("/test/clientstream", (req: Request, res: Response) => {
 //   clientStreamComms(req, res, wsClient);
