@@ -1,0 +1,5 @@
+node_modules/
+proto/
+server/
+client/
+generated_clients/
