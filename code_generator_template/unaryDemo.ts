@@ -1,35 +1,35 @@
-// import { StreamNormalMessage } from "../proto/chat_pb";
-// import { Request, Response } from "express";
-// import { credentials } from "grpc";
-// import { ChatServiceClient } from "../proto/chat_grpc_pb";
-// import ws from "ws";
+import { StreamNormalMessage } from "../proto/recieved_pb";
+import { Request, Response } from "express";
+import { credentials } from "grpc";
+import { ChatServiceClient } from "../proto/recieved_grpc_pb";
+import ws from "ws";
 
-// export const serverStreamComms = (
-//   req: Request,
-//   res: Response,
-//   wsc: ws
-// ): any => {
-//   if (wsc.OPEN === 1) {
-//     const request = new StreamNormalMessage();
-//     const recieved = req.body;
-//     // console.log(recieved);
-//     request.setBodyList(recieved.body);
-//     request.setLanguage(recieved.language);
-//     // read message sent to server
+export const serverStreamComms = (
+  req: Request,
+  res: Response,
+  wsc: ws
+): any => {
+  if (wsc.OPEN === 1) {
+    const request = new StreamNormalMessage();
+    const recieved = req.body;
+    // console.log(recieved);
+    request.setBody(recieved.body);
+    request.setLanguage(recieved.language);
+    // read message sent to server
 
-//     const port = 7899;
-//     const uri = `localhost:${port}`;
-//     const client = new ChatServiceClient(uri, credentials.createInsecure());
-//     const stream = client.serverStreamComms(request);
-//     stream.on("err", (err) => console.log(err));
-//     stream.on("data", (d) => {
-//       wsc.send(d.toString());
-//     });
-//     stream.on("end", () => {
-//       res.json({ msg: "stream closed" });
-//     });
-//   }
-// };
+    const port = 7899;
+    const uri = `localhost:${port}`;
+    const client = new ChatServiceClient(uri, credentials.createInsecure());
+    const stream = client.serverStreamComms(request);
+    stream.on("err", (err) => console.log(err));
+    stream.on("data", (d) => {
+      wsc.send(d.toString());
+    });
+    stream.on("end", () => {
+      res.json({ msg: "stream closed" });
+    });
+  }
+};
 
 // // export const clientStreamComms = async (
 // //   req: Request,

@@ -10,33 +10,30 @@ interface IUnaryRpcTemplate {
   serviceName: string;
 }
 
+// TODO : validate message and and request body params
+
 const template = (populate: IUnaryRpcTemplate): string => {
   let request_code = "";
   let funcName = `unary${capitalizeFirstLetter(populate.rpcName)}`;
   Object.keys(populate.requestBody).map((key: string, idx: number) => {
     let keyCaptitalised = capitalizeFirstLetter(key);
-    if (typeof populate.requestBody[key] === "string")
-      request_code += `request.set${keyCaptitalised}("${populate.requestBody[key]}");\n`;
-    else
-      request_code += `request.set${keyCaptitalised}(${populate.requestBody[key]});\n`;
-
+    request_code += `request.set${keyCaptitalised}(req.body.${key});\n`;
     request_code += "    ";
   });
-  let clientMessageName = `Unary${populate.clientMessageType}`;
 
   return `
-  import { ${clientMessageName} } from "../proto/chat_pb";
+  import { ${populate.clientMessageType} } from "../proto/recieved_pb";
   import { Request, Response } from "express";
   import { credentials } from "grpc";
-  import { ${populate.serviceName}Client } from "../proto/chat_grpc_pb";
+  import { ${populate.serviceName}Client } from "../proto/recieved_grpc_pb";
 
 
-  const client = new ChatServiceClient("${populate.uri}", credentials.createInsecure());
-  const request = new UnaryNormalMessage();
+  const client = new ${populate.serviceName}Client("${populate.uri}", credentials.createInsecure());
+  const request = new ${populate.clientMessageType}();
   
-  export const ${funcName} = (req: Request, res: Response): any => {
+  const ${funcName} = (req: Request, res: Response): any => {
     
-    const request = new ${clientMessageName}();
+    const request = new ${populate.clientMessageType}();
     ${request_code}
     
     client.${populate.rpcName}(request, function (err: any, data: any) {
@@ -44,11 +41,10 @@ const template = (populate: IUnaryRpcTemplate): string => {
         console.log(err);
         return;
       }
-      //
       res.json(data.toObject());
     });
   };
-  //
+  module.exports = ${funcName}
 `;
 };
 

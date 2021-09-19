@@ -6,10 +6,7 @@ import multer from "multer";
 import { CodeGenerator } from "./controllers/CodeGenerator";
 import { Request, Response } from "express";
 import fs from "fs";
-
-// import {
-//   serverStreamComms,
-// } from "./code_generator_template/unaryDemo";
+import { serverStreamComms } from "./code_generator_template/unaryDemo";
 import ws from "ws";
 import WebSocket from "ws";
 const port = 8080; // default port to listen
@@ -22,8 +19,7 @@ const storage = multer.diskStorage({
     cb(null, __dirname + "/proto");
   },
   filename: function (req, file, cb) {
-    const uniqueSuffix =
-      "recieved_" + Math.round(Math.random() * 1e9) + ".proto";
+    const uniqueSuffix = "recieved" + ".proto";
     cb(null, uniqueSuffix);
   },
 });
@@ -38,11 +34,12 @@ const upload = multer({
     let requiredDir = "./proto";
 
     // remove proto folder if exist
-    if (fs.existsSync(requiredDir)) fs.rmdirSync(requiredDir);
-  
+    if (fs.existsSync(requiredDir))
+      fs.rmdirSync(requiredDir, { recursive: true });
+
     // create proto folder if not exist
     if (!fs.existsSync(requiredDir)) fs.mkdirSync(requiredDir);
-  
+
     cb(null, true);
   },
 });
@@ -57,11 +54,12 @@ wss.on("connection", (ws) => {
   console.log("A new Client connected");
   wsClient = ws;
 });
-// app.get("/test/unary", (req: Request, res: Response) => {
-//   const { query } = req;
-//   const func = require(`./generated_clients/${query.func}`);
-//   func(req, res);
-// });
+app.post("/test/unary", (req: Request, res: Response) => {
+  const { query } = req;
+  const func = require(`./generated_clients/${query.func}`);
+  console.log(func);
+  func(req, res);
+});
 
 // app.post("/test/serverstream", (req: Request, res: Response) => {
 //   serverStreamComms(req, res, wsClient);
