@@ -41,7 +41,7 @@ const template = (populate: IServerStreamRpcTemplate): string => {
       const client = new ${populate.serviceName}Client("${populate.uri}", credentials.createInsecure());
       
       // send single message to server
-      const stream = client.serverStreamComms(request);
+      const stream = client.${populate.rpcName}(request);
       stream.on("err", (err) => console.log(err));
       
       // read message sent from server
@@ -53,18 +53,6 @@ const template = (populate: IServerStreamRpcTemplate): string => {
         res.json({ msg: "stream closed" });
       });
     }
-    
-    const request = new ${populate.clientMessageType}();
-    ${request_code}
-    
-    client.${populate.rpcName}(request, function (err: any, data: any) {
-      if (err) {
-        console.log(err);
-        return;
-      }
-      
-      res.json(data.toObject());
-    });
   };
   module.exports = ${funcName};
 `;

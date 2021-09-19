@@ -6,7 +6,6 @@ import multer from "multer";
 import { CodeGenerator } from "./controllers/CodeGenerator";
 import { Request, Response } from "express";
 import fs from "fs";
-import { serverStreamComms } from "./code_generator_template/unaryDemo";
 import ws from "ws";
 import WebSocket from "ws";
 const port = 8080; // default port to listen
