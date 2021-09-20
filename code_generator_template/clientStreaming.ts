@@ -1,23 +1,19 @@
 import { capitalizeFirstLetter } from "../utils";
 import fs from "fs";
+import { IStreamRpcTemplate } from "../types/rpc";
 
-interface IClientStreamRpcTemplate {
-  rpcName: string;
-  clientMessageType: string;
-  requestBody: any;
-  uri: string;
-  serviceName: string;
-  socketKeepAliveTime: number;
-}
-
-const template = (populate: IClientStreamRpcTemplate): string => {
+const template = (populate: IStreamRpcTemplate): string => {
   let request_code = "";
   let funcName = `streamServer${capitalizeFirstLetter(populate.rpcName)}`;
-  Object.keys(populate.requestBody).map((key: string, idx: number) => {
-    let keyCaptitalised = capitalizeFirstLetter(key);
-    request_code += `request.set${keyCaptitalised}(recieved.${key});\n\t\t`;
-    request_code += "\t\t";
-  });
+  populate.clientMessageBody.map(
+    (key: IStreamRpcTemplate["clientMessageBody"]) => {
+      let keyCaptitalised = capitalizeFirstLetter(key.name);
+      request_code += `request.set${keyCaptitalised}(recieved.${key.name});\n`;
+      request_code += "    ";
+    }
+  );
+
+  // TODO : make server data sent on ws too
 
   return `
   import { ${populate.clientMessageType} } from "../proto/recieved_pb";
@@ -39,12 +35,11 @@ const template = (populate: IClientStreamRpcTemplate): string => {
         let request = new ${populate.clientMessageType}();
         ${request_code}
         stream.write(request);
-        wsc.send("ACK");
       });
   
       setTimeout(() => {
         stream.end();
-        if (wsc.CLOSED) wsc.close();
+        wsc.close();
       }, ${populate.socketKeepAliveTime});
     }
   };
@@ -52,7 +47,7 @@ const template = (populate: IClientStreamRpcTemplate): string => {
 `;
 };
 
-export function generateClientStreamFunction(rpc: IClientStreamRpcTemplate) {
+export function generateClientStreamFunction(rpc: IStreamRpcTemplate) {
   const data: string = template(rpc);
   const dir = __dirname + `/../generated_clients`;
 

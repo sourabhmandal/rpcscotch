@@ -13,10 +13,8 @@ const template = (populate: IStreamRpcTemplate): string => {
     }
   );
 
-  // TODO : make client data sent on ws too
-
   return `
-  import { ${populate.clientMessageType} } from "../proto/recieved_pb";
+  import { ${populate.clientMessageType}, ${populate.serverMessageType} } from "../proto/recieved_pb";
   import { Request, Response } from "express";
   import { credentials } from "grpc";
   import { ${populate.serviceName}Client } from "../proto/recieved_grpc_pb";
@@ -24,32 +22,38 @@ const template = (populate: IStreamRpcTemplate): string => {
   
   const ${funcName} = (req: Request, res: Response, wsc: ws): any => {
     if (wsc.OPEN === 1) {
-      const request = new ${populate.clientMessageType}();
-      const recieved = req.body;
-      // console.log(recieved);
-      ${request_code}
-
       const client = new ${populate.serviceName}Client("${populate.uri}", credentials.createInsecure());
       
-      // send single message to server
-      const stream = client.${populate.rpcName}(request);
-      stream.on("err", (err) => console.log(err));
-      
-      // read message sent from server
-      stream.on("data", (d) => {
-        wsc.send(d.toString());
+      const stream = client.${populate.rpcName}();
+      // send websocket data to server
+      wsc.on("message", (msg: string) => {
+        let recieved = JSON.parse(msg);
+        let request = new ${populate.clientMessageType}();
+        ${request_code}
+        stream.write(request);
       });
+
+      // get data through ws
+      stream.on("data", (data: ${populate.serverMessageType}) => {
+        wsc.send(data.toString());
+      });
+
       // close stream on Data transfer completion
       stream.on("end", () => {
         res.json({ msg: "stream closed" });
       });
+  
+      setTimeout(() => {
+        stream.end();
+        if (wsc.CLOSED) wsc.close();
+      }, ${populate.socketKeepAliveTime});
     }
   };
   module.exports = ${funcName};
 `;
 };
 
-export function generateServerStreamFunction(rpc: IStreamRpcTemplate) {
+export function generateBiDirStreamFunction(rpc: IStreamRpcTemplate) {
   const data: string = template(rpc);
   const dir = __dirname + `/../generated_clients`;
 

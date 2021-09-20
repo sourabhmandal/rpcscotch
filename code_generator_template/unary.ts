@@ -1,24 +1,20 @@
 import { capitalizeFirstLetter } from "../utils";
 import fs from "fs";
-
-interface IUnaryRpcTemplate {
-  rpcName: string;
-  clientMessageType: string;
-  requestBody: any;
-  uri: string;
-  serviceName: string;
-}
+import { IUnaryRpcTemplate } from "../types/rpc";
 
 // TODO : validate message and and request body params
 
 const template = (populate: IUnaryRpcTemplate): string => {
   let request_code = "";
+  console.log(populate.rpcName);
   let funcName = `unary${capitalizeFirstLetter(populate.rpcName)}`;
-  Object.keys(populate.requestBody).map((key: string, idx: number) => {
-    let keyCaptitalised = capitalizeFirstLetter(key);
-    request_code += `request.set${keyCaptitalised}(req.body.${key});\n`;
-    request_code += "    ";
-  });
+  populate.clientMessageBody.map(
+    (key: IUnaryRpcTemplate["clientMessageBody"]) => {
+      let keyCaptitalised = capitalizeFirstLetter(key.name);
+      request_code += `request.set${keyCaptitalised}(req.body.${key.name});\n`;
+      request_code += "    ";
+    }
+  );
 
   return `
   import { ${populate.clientMessageType} } from "../proto/recieved_pb";

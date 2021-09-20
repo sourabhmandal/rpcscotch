@@ -71,9 +71,11 @@ app.post("/test/clientstream", (req: Request, res: Response) => {
   func(req, res, wsClient);
 });
 
-// app.get("/test/bidirstream", (req: Request, res: Response) => {
-//   bidirStreamComms(req, res, wsClient);
-// });
+app.get("/test/bidirstream", (req: Request, res: Response) => {
+  const { query } = req;
+  const func = require(`./generated_clients/${query.func}`);
+  func(req, res, wsClient);
+});
 
 // start the Express server
 app.listen(port, () => {
